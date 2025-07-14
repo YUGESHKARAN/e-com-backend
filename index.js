@@ -9,7 +9,7 @@ const cors = require('cors');
 app.use(
   cors({
     // origin: ["https://blog-frontend-teal-ten.vercel.app","http://localhost:5173","https://mongodb-rag-rho.vercel.app"],// Match your frontend domain
-    origin: ["https://classy-gift-gallery.vercel.app/","http://localhost:5173"],// Match your frontend domain
+    origin: ["https://classy-gift-gallery.vercel.app","http://localhost:5173"],// Match your frontend domain
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
