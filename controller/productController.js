@@ -64,7 +64,7 @@ const getSingleProduct = async (req, res) => {
 // Add a new product ------ Changes required
 const addProducts = async (req, res) => {
   try {
-    const { product_name, description, category, price, discount, in_stock, banner } = req.body;
+    const { product_name, description, category, price, discount, in_stock, banner, best_seller } = req.body;
 
     if (!product_name || !description || !price || !category) {
       return res.status(400).json({ error: "All fields are required" });
@@ -116,6 +116,7 @@ const addProducts = async (req, res) => {
       in_stock,
       banner,
       demo_video,
+      best_seller
     });
 
     await newProduct.save();
@@ -178,6 +179,7 @@ const updateProduct = async (req, res) => {
       discount = existingProduct.discount,
       in_stock = existingProduct.in_stock,
       banner = existingProduct.banner,
+      best_seller = existingProduct.best_seller
     } = req.body;
 
     // Optional validation (skip if partial updates allowed)
@@ -198,6 +200,7 @@ const updateProduct = async (req, res) => {
         banner,
         product_images,
         demo_video,
+        best_seller
       },
       { new: true }
     );

@@ -13,6 +13,7 @@ const productSchema = new Schema({
   product_images:[String],                                       // filenames or URLs
   in_stock:      { type: Boolean, default: true },
   banner:        { type: Boolean, default: false },
+  best_seller:        { type: Boolean, default: false },
   demo_video:    { type: String },                             // URL or filename
   rating:        { type: Number, default: 5, min: 0, max: 5 }   
 }, {
