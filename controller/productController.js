@@ -1,5 +1,5 @@
 
-const {Product} = require("../model/mainSchema");
+const {Product, Celebration} = require("../model/mainSchema");
 // s3 integration
 const { S3Client,PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 require('dotenv').config()
@@ -140,7 +140,7 @@ const updateProduct = async (req, res) => {
 
     // Handle updated images
     let product_images = existingProduct.product_images;
-    if (req.files && req.files.image) {
+    if (req.files && req.files.image && req.files.image.length > 0){
       product_images = [];
       for (const img of req.files.image) {
         const params = {
@@ -273,4 +273,186 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = {getAllProducts, getSingleProduct, addProducts, updateProduct, deleteProduct}
+
+
+
+
+
+// Create a new celebration
+const createCelebration = async (req, res) => {
+  try {
+    let { title, date, description, products } = req.body;
+
+      // Parse products if sent as JSON string
+    if (typeof products === "string") {
+      try {
+        products = JSON.parse(products);
+      } catch (e) {
+        return res.status(400).json({ error: "Invalid products format" });
+      }
+    }
+
+    let imageUrl = '';
+     if (req.files && req.files.image)  {
+      // const buffer = await sharp(req.files.image[0].buffer)
+      //   .resize({ width: 672, height: 462, fit: 'contain' })
+      //   .toBuffer();
+
+      await s3.send(new PutObjectCommand({
+        Bucket: bucketName,
+        Key: req.files.image[0].originalname,
+        Body: req.files.image[0].buffer,
+        ContentType: req.files.image[0].mimetype
+      }));
+
+      imageUrl = req.files.image[0].originalname;
+    }
+
+
+    const celebration = new Celebration({
+      title,
+      date,
+      description,
+      image:imageUrl,
+      products
+    });
+
+    await celebration.save();
+    res.status(201).json({ message: "Celebration created successfully", celebration });
+  } catch (err) {
+    console.error("Error creating celebration:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Get all celebrations
+const getAllCelebrations = async (req, res) => {
+  try {
+    const celebrations = await Celebration.find().sort({ date: 1 });
+    res.status(200).json(celebrations);
+  } catch (err) {
+    console.error("Error fetching celebrations:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Get products for a specific celebration
+const getCelebrationProducts = async (req, res) => {
+  try {
+    const celebrationId = req.params.id;
+    const celebration = await Celebration.findById(celebrationId).populate("products");
+
+    if (!celebration) {
+      return res.status(404).json({ error: "Celebration not found" });
+    }
+
+    res.status(200).json({ celebration, products: celebration.products });
+  } catch (err) {
+    console.error("Error fetching celebration products:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// const updateCelebrationProducts = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { products } = req.body; // array of product IDs
+
+//     const celebration = await Celebration.findByIdAndUpdate(
+//       id,
+//       { $set: { products } },
+//       { new: true }
+//     ).populate("products");
+
+//     if (!celebration) {
+//       return res.status(404).json({ error: "Celebration not found" });
+//     }
+
+//     res.status(200).json(celebration);
+//   } catch (err) {
+//     console.error("Error updating celebration products:", err);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+
+const updateCelebrationProducts = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Extract body data
+    const { title, date, description, products } = req.body;
+
+    // Prepare update object
+    let updateData = {
+      title,
+      date,
+      description
+
+    };
+
+      // Parse products safely
+    if (products) {
+      try {
+        updateData.products = Array.isArray(products)
+          ? products
+          : JSON.parse(products);
+      } catch (err) {
+        return res.status(400).json({ error: "Invalid products format" });
+      }
+    }
+
+    // If new image uploaded, add to update data
+ // If new image uploaded
+    if (req.files && req.files.image && req.files.image.length > 0) {
+      const file = req.files.image[0];
+
+      await s3.send(new PutObjectCommand({
+        Bucket: bucketName,
+        Key: file.originalname,
+        Body: file.buffer,
+        ContentType: file.mimetype
+      }));
+
+      updateData.image = file.originalname;
+    }
+
+    const celebration = await Celebration.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true }
+    ).populate("products");
+
+    if (!celebration) {
+      return res.status(404).json({ error: "Celebration not found" });
+    }
+
+    res.status(200).json(celebration);
+  } catch (err) {
+    console.error("Error updating celebration:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+const deleteCelebration = async (req, res) => {
+  try {
+    const celebration = await Celebration.findById(req.params.id);
+
+    if (!celebration) {
+      return res.status(404).json({ error: "Celebration not found" });
+    }
+
+    await Celebration.findByIdAndDelete(req.params.id);
+    res.json({ message: "Celebration deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting celebration:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+module.exports = {getAllProducts, getSingleProduct, addProducts, updateProduct, deleteProduct,  createCelebration,
+  getAllCelebrations,
+  getCelebrationProducts,
+  updateCelebrationProducts,
+  deleteCelebration
+}
