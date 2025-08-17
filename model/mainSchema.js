@@ -99,7 +99,7 @@ const celebrationSchema = new Schema({
   title: { type: String, required: true, index: true },  // e.g. "Janmashtami"
   date: { type: Date, required: true, index: true },     // celebration date
   description: { type: String },
-  image: { type: String },                               // filename or URL
+  image: { type: String, required: true },                               // filename or URL
   products: [{ type: Types.ObjectId, ref: "Product" }]   // linked gift products
 }, {
   timestamps: true
