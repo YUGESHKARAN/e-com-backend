@@ -4,6 +4,10 @@ const {Product, Celebration} = require("../model/mainSchema");
 const { S3Client,PutObjectCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
 require('dotenv').config()
 
+// import { v4 as uuidv4 } from 'uuid'; 
+
+
+const { v4: uuidv4 } = require('uuid');
 
 const bucketName = process.env.BUCKET_NAME;
 const bucketRegion = process.env.BUCKET_REGION;
@@ -78,32 +82,34 @@ const addProducts = async (req, res) => {
     // Upload images to S3 and store file names
     if (req.files && req.files.image) {
       for (const img of req.files.image) {
+       const uniqueFilename = `${uuidv4()}-${img.originalname}`;
         const params = {
           Bucket: bucketName,
-          Key: img.originalname,
+          Key: uniqueFilename,
           Body: img.buffer,
           ContentType: img.mimetype,
         };
 
         const command = new PutObjectCommand(params);
         await s3.send(command);
-        product_images.push(img.originalname); // store only file name
+        product_images.push(uniqueFilename); // store only file name
       }
     }
 
     // Upload video to S3 and store file name
     if (req.files && req.files.video && req.files.video.length > 0) {
       const vid = req.files.video[0];
+      const uniqueVideoName = `${uuidv4()}-${vid.originalname}`;
       const params = {
         Bucket: bucketName,
-        Key: vid.originalname,
+        Key: uniqueVideoName,
         Body: vid.buffer,
         ContentType: vid.mimetype,
       };
 
       const command = new PutObjectCommand(params);
       await s3.send(command);
-      demo_video = vid.originalname; // store only file name
+      demo_video = uniqueVideoName; // store only file name
     }
 
     const newProduct = new Product({
@@ -143,15 +149,16 @@ const updateProduct = async (req, res) => {
     if (req.files && req.files.image && req.files.image.length > 0){
       product_images = [];
       for (const img of req.files.image) {
+         const uniqueFilename = `${uuidv4()}-${img.originalname}`;
         const params = {
           Bucket: bucketName,
-          Key: img.originalname,
+          Key: uniqueFilename,
           Body: img.buffer,
           ContentType: img.mimetype,
         };
         const command = new PutObjectCommand(params);
         await s3.send(command);
-        product_images.push(img.originalname); // store only file name
+        product_images.push(uniqueFilename); // store only file name
       }
     }
 
@@ -159,15 +166,16 @@ const updateProduct = async (req, res) => {
     let demo_video = existingProduct.demo_video;
     if (req.files && req.files.video && req.files.video.length > 0) {
       const vid = req.files.video[0];
+       const uniqueVideoName = `${uuidv4()}-${vid.originalname}`;
       const params = {
         Bucket: bucketName,
-        Key: vid.originalname,
+        Key: uniqueVideoName,
         Body: vid.buffer,
         ContentType: vid.mimetype,
       };
       const command = new PutObjectCommand(params);
       await s3.send(command);
-      demo_video = vid.originalname; // store only file name
+      demo_video = uniqueVideoName; // store only file name
     }
 
     // Destructure or fallback to existing values
@@ -297,15 +305,16 @@ const createCelebration = async (req, res) => {
       // const buffer = await sharp(req.files.image[0].buffer)
       //   .resize({ width: 672, height: 462, fit: 'contain' })
       //   .toBuffer();
-
+      const img = req.files.image[0];
+      const uniqueFilename = `${uuidv4()}-${img.originalname}`;
       await s3.send(new PutObjectCommand({
         Bucket: bucketName,
-        Key: req.files.image[0].originalname,
+        Key: uniqueFilename,
         Body: req.files.image[0].buffer,
         ContentType: req.files.image[0].mimetype
       }));
 
-      imageUrl = req.files.image[0].originalname;
+      imageUrl = uniqueFilename;
     }
 
 
@@ -404,16 +413,18 @@ const updateCelebrationProducts = async (req, res) => {
     // If new image uploaded, add to update data
  // If new image uploaded
     if (req.files && req.files.image && req.files.image.length > 0) {
-      const file = req.files.image[0];
+      // const file = req.files.image[0];
+      const img = req.files.image[0];
+      const uniqueFilename = `${uuidv4()}-${img.originalname}`;
 
       await s3.send(new PutObjectCommand({
         Bucket: bucketName,
-        Key: file.originalname,
-        Body: file.buffer,
-        ContentType: file.mimetype
+        Key: uniqueFilename,
+        Body: img.buffer,
+        ContentType: img.mimetype
       }));
 
-      updateData.image = file.originalname;
+      updateData.image = uniqueFilename;
     }
 
     const celebration = await Celebration.findByIdAndUpdate(

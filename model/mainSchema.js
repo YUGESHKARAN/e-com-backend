@@ -54,7 +54,7 @@ const orderSchema = new Schema({
   to_address:      { type: addressSchema, required: true },
   products:        { type: [orderItemSchema], required: true },
   totalPrice:          { type: Number, required: true },
-  delivery_status: { type: String, enum: ['pending','delivered','cancelled'], default: 'pending' },
+  delivery_status: { type: String, enum: ['pending','shipped','delivered','cancelled'], default: 'pending' },
   payment_mode: { type: String, enum: ['online','offline'], default: 'online' },
   payment_status:  { type: Boolean, default: false },
   ordered_at:      { type: Date, default: Date.now }
